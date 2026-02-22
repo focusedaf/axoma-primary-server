@@ -1,29 +1,21 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
-
-dotenv.config();
+import { env } from "./config/env";
+import AuthRouter from "./modules/auth/auth.routes";
 
 const app = express();
-const PORT = 4000;
 
-app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: env.CLIENT_URL,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
-app.get("/", async (req: Request, res: Response) => {
-    res.send("we ball");
-});
+app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`Server running on port http://localhost:${PORT}`);
+app.use("/api/v1/auth", AuthRouter);
+
+app.listen(env.PORT, () => {
+  console.log(`Server running on http://localhost:${env.PORT}`);
 });
