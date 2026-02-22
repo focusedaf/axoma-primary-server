@@ -1,0 +1,1 @@
+// loads the variables safely from .env
