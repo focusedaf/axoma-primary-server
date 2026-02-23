@@ -15,6 +15,10 @@
     email        String   @unique
     password     String
     createdAt    DateTime @default(now())
+
+
+    profile   CandidateProfile?
+    documents CandidateDocument[]
   }
 
   enum UserRole {
@@ -34,4 +38,95 @@
     password        String
     walletAddress   String   @unique
     createdAt       DateTime @default(now())
+
+    institutionProfile InstitutionProfile?
+    professorProfile   ProfessorProfile?
+    recruiterProfile   RecruiterProfile?
+    documents          IssuerDocument[]
+    onboardingCompleted Boolean @default(false)
   }
+
+  model InstitutionProfile {
+  id                 String   @id @default(uuid())
+  issuerId           String   @unique
+  issuer             Issuer   @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+
+  institutionName    String
+  industry           String
+  description        String?
+  location           String
+  institutionType    String
+  institutionWebsite String?
+  yearEstablished    Int
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model ProfessorProfile {
+  id             String   @id @default(uuid())
+  issuerId       String   @unique
+  issuer         Issuer   @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+
+  universityName String
+  collegeName    String
+  department     String
+  designation    String
+  employmentType String
+  joiningYear    Int
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model RecruiterProfile {
+  id              String   @id @default(uuid())
+  issuerId        String   @unique
+  issuer          Issuer   @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+
+  companyName     String
+  industry        String
+  department      String
+  designation     String
+  employmentType  String
+  companyWebsite  String?
+  linkedinProfile String?
+  joiningYear     Int
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model IssuerDocument {
+  id        String   @id @default(uuid())
+  issuerId  String
+  issuer    Issuer   @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+
+  fileUrl   String
+  type      String  
+
+  createdAt DateTime @default(now())
+}
+
+model CandidateProfile {
+  id             String   @id @default(uuid())
+  candidateId    String   @unique
+  universityName String
+  collegeName    String
+  majorName      String
+  currentSem     Int
+  startYear      String
+  gradYear       String
+
+  candidate      Candidate @relation(fields: [candidateId], references: [id])
+}
+
+model CandidateDocument {
+  id          String   @id @default(uuid())
+  candidateId String
+  fileUrl     String
+  type        String
+  createdAt   DateTime @default(now())
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+}
