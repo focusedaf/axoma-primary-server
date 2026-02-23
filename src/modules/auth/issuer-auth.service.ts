@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { issuerRegisterSchema } from "./auth.schema";
-import { hashPassword, verifyPassword, rotateTokens } from "../../utils/helper";
+import {
+  hashPassword,
+  verifyPassword,
+  rotateTokens,
+  UserRole,
+} from "../../utils/helper";
 import { issuerRepository } from "../issuer/issuer.repository";
 
 type IssuerRegisterInput = z.infer<typeof issuerRegisterSchema>;
@@ -46,10 +51,25 @@ export const issuerAuthService = {
     const valid = await verifyPassword(password, issuer.password);
     if (!valid) throw new Error("Invalid credentials");
 
-    return rotateTokens(
-      { userId: issuer.id, role: issuer.role },
+    const tokens = rotateTokens(
+      { userId: issuer.id, role: issuer.role }, 
       process.env.ACCESS_TOKEN_SECRET!,
       process.env.REFRESH_TOKEN_SECRET!,
     );
+
+    return {
+      user: {
+        id: issuer.id,
+        email: issuer.email,
+        role: issuer.role,
+      },
+      ...tokens,
+    };
+  },
+
+  getById: async (id: string) => {
+    const issuer = await issuerRepository.findById(id);
+    if (!issuer) throw new Error("Issuer not found");
+    return { id: issuer.id, email: issuer.email, role: issuer.role };
   },
 };

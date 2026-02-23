@@ -1,37 +1,37 @@
-generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
-}
+  generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+  }
 
-datasource db {
-  provider = "postgresql"
-}
+  datasource db {
+    provider = "postgresql"
+  }
 
-model Candidate {
-  id           String   @id @default(uuid())
-  firstName    String
-  lastName     String
-  mobileNumber String
-  email        String   @unique
-  password     String
-  createdAt    DateTime @default(now())
-}
+  model Candidate {
+    id           String   @id @default(uuid())
+    firstName    String
+    lastName     String
+    mobileNumber String
+    email        String   @unique
+    password     String
+    createdAt    DateTime @default(now())
+  }
 
-enum UserRole {
-  professor
-  recruiter
-  institution
-}
+  enum UserRole {
+    professor
+    recruiter
+    institution
+  }
 
-model Issuer {
-  id              String   @id @default(uuid())
-  role            UserRole
-  firstName       String?
-  lastName        String?
-  institutionName String?
-  mobileNumber    String
-  email           String   @unique
-  password        String
-  walletAddress   String   @unique
-  createdAt       DateTime @default(now())
-}
+  model Issuer {
+    id              String   @id @default(uuid())
+    role            UserRole
+    firstName       String?
+    lastName        String?
+    institutionName String?
+    mobileNumber    String
+    email           String   @unique
+    password        String
+    walletAddress   String   @unique
+    createdAt       DateTime @default(now())
+  }

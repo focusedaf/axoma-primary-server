@@ -40,10 +40,25 @@ export const candidateAuthService = {
     const valid = await verifyPassword(password, candidate.password);
     if (!valid) throw new Error("Invalid credentials");
 
-    return rotateTokens(
+    const tokens = rotateTokens(
       { userId: candidate.id, role: "candidate" },
       process.env.ACCESS_TOKEN_SECRET!,
       process.env.REFRESH_TOKEN_SECRET!,
     );
+
+    return {
+      user: {
+        id: candidate.id,
+        email: candidate.email,
+        role: "candidate",
+      },
+      ...tokens,
+    };
+  },
+
+  getById: async (id: string) => {
+    const candidate = await candidateRepository.findById(id);
+    if (!candidate) throw new Error("Candidate not found");
+    return { id: candidate.id, email: candidate.email, role: "candidate" };
   },
 };

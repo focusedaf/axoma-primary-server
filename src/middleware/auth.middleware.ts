@@ -13,15 +13,13 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies?.accessToken;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const token = authHeader.split(" ")[1];
-
-  const decoded = verifyAccessToken(token, process.env.ACCESS_SECRET!);
+  const decoded = verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET!);
 
   if (!decoded) {
     return res.status(401).json({ message: "Invalid token" });
