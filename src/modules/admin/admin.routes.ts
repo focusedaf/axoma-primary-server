@@ -7,24 +7,17 @@ import {
   approveIssuer,
   suspendIssuer,
 } from "./admin.controller";
-import { authMiddleware, AuthRequest } from "../../middleware/auth.middleware";
+import { authMiddleware } from "../../middleware/auth.middleware";
+import { roleMiddleware } from "../../middleware/role.middleware";
 
 const AdminRouter = Router();
 
 AdminRouter.post("/register", registerAdmin);
 AdminRouter.post("/login", loginAdmin);
-AdminRouter.post("/logout",logoutAdmin)
-AdminRouter.use(authMiddleware);
+AdminRouter.post("/logout", logoutAdmin);
 
-AdminRouter.use((req: AuthRequest, res, next) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({
-      success: false,
-      message: "Forbidden - Admin only",
-    });
-  }
-  next();
-});
+AdminRouter.use(authMiddleware);
+AdminRouter.use(roleMiddleware(["admin"]));
 
 AdminRouter.get("/issuers", fetchIssuers);
 AdminRouter.patch("/issuers/:id/approve", approveIssuer);
