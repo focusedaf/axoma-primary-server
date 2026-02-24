@@ -7,6 +7,13 @@
     provider = "postgresql"
   }
 
+  model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      String   @default("admin")
+  password  String
+  createdAt DateTime @default(now())
+}
   model Candidate {
     id           String   @id @default(uuid())
     firstName    String
@@ -27,6 +34,11 @@
     institution
   }
 
+    enum IssuerStatus {
+    pending
+    suspended
+    approved
+  }
   model Issuer {
     id              String   @id @default(uuid())
     role            UserRole
@@ -38,7 +50,7 @@
     password        String
     walletAddress   String   @unique
     createdAt       DateTime @default(now())
-
+    status          IssuerStatus @default(pending) 
     institutionProfile InstitutionProfile?
     professorProfile   ProfessorProfile?
     recruiterProfile   RecruiterProfile?

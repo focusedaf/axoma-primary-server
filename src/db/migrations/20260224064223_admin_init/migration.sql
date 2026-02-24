@@ -1,0 +1,18 @@
+-- CreateEnum
+CREATE TYPE "IssuerStatus" AS ENUM ('pending', 'suspended', 'approved');
+
+-- AlterTable
+ALTER TABLE "Issuer" ADD COLUMN     "status" "IssuerStatus" NOT NULL DEFAULT 'pending';
+
+-- CreateTable
+CREATE TABLE "Admin" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");

@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 
-export type UserRole = "candidate" | "professor" | "recruiter" | "institution";
+export type UserRole ="admin"| "candidate" | "professor" | "recruiter" | "institution";
 
 export interface AccessTokenPayload extends JwtPayload {
   userId: string;

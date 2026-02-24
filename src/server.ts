@@ -4,6 +4,7 @@ import { env } from "./config/env";
 import cookieParser from "cookie-parser";
 import AuthRouter from "./modules/auth/auth.routes";
 import OnboardingRouter from "./modules/onboarding/onboarding.routes";
+import AdminRouter from "./modules/admin/admin.routes";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+app.use("/api/v1/admin", AdminRouter);
 app.use("/api/v1/auth", AuthRouter);
 app.use("/api/v1/onboarding",OnboardingRouter);
 
