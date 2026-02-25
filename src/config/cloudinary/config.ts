@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 
-const connectCloudinary = async () => {
+const connectCloudinary = () => {
   cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -9,4 +9,5 @@ const connectCloudinary = async () => {
   console.log("Cloudinary connected");
 };
 
+export { cloudinary, connectCloudinary };
 export default connectCloudinary;

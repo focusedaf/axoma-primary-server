@@ -2,6 +2,10 @@ import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { onboardingService } from "./onboarding.core.service";
 import { getOnboardingSchemaByRole } from "./onboarding.schema";
+import connectCloudinary, { cloudinary } from "../../config/cloudinary/config";
+import { UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
+
+connectCloudinary();
 
 export const onboardingController = {
   async upsertProfile(req: AuthRequest, res: Response): Promise<void> {
@@ -55,37 +59,48 @@ export const onboardingController = {
     }
   },
 
-  async addDocuments(req: AuthRequest, res: Response): Promise<void> {
+  async addDocuments(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      if (!req.user) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
-
-      if (!req.files) {
-        res.status(400).json({ message: "No files uploaded" });
-        return;
-      }
+      if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
       const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0)
+        return res.status(400).json({ message: "No files uploaded" });
 
-      if (!files.length) {
-        res.status(400).json({ message: "No files uploaded" });
-        return;
+      const urls: string[] = [];
+
+      for (const file of files) {
+        const result = await new Promise<UploadApiResponse>(
+          (resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream(
+                {
+                  folder: "issuer-docs",
+                  upload_preset: "issuer_docs",
+                  resource_type: "auto",
+                },
+                (error, result) => {
+                  if (error) reject(error);
+                  else if (result) resolve(result);
+                  else reject(new Error("Unknown Cloudinary error"));
+                },
+              )
+              .end(file.buffer);
+          },
+        );
+        urls.push(result.secure_url);
       }
-
-      const fileUrls = files.map((file: Express.Multer.File) => file.path);
 
       await onboardingService.addDocuments(
         req.user.userId,
         req.user.role,
-        fileUrls,
+        urls,
       );
 
-      res.json({ message: "Documents uploaded" });
+      return res.json({ message: "Documents uploaded", urls });
     } catch (error) {
       console.error("Onboarding upload error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: "Internal server error" });
     }
   },
 };
