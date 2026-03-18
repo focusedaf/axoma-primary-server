@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { adminService } from "./admin.service";
 import { IssuerStatus } from "../../db/generated/prisma";
-import { createAccessToken } from "../../utils/helper";
+import { rotateTokens } from "../../utils/helper";
+import { AuthRequest } from "../../middleware/auth.middleware";
 
 export const registerAdmin = async (req: Request, res: Response) => {
   try {
@@ -31,23 +32,32 @@ export const loginAdmin = async (req: Request, res: Response) => {
 
     const admin = await adminService.login(email, password);
 
-    const token = createAccessToken(
+    const { accessToken, refreshToken } = rotateTokens(
       {
         userId: admin.id,
-        role:"admin",
+        role: "admin",
       },
-      process.env.ACCESS_TOKEN_SECRET as string,
+      process.env.ACCESS_TOKEN_SECRET!,
+      process.env.REFRESH_TOKEN_SECRET!,
     );
 
-    res.cookie("accessToken", token, {
+    res.cookie("adminAccessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      sameSite: "lax",
+    });
+
+    res.cookie("adminRefreshToken", refreshToken, {
+      httpOnly: true,
       sameSite: "lax",
     });
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      user: {
+        id: admin.id,
+        role: "admin",
+      },
     });
   } catch (error: any) {
     return res.status(401).json({
@@ -57,11 +67,12 @@ export const loginAdmin = async (req: Request, res: Response) => {
   }
 };
 
-export const logoutAdmin = async(req:Request,res:Response) => {
-      res.clearCookie("accessToken", { path: "/" });
-      res.clearCookie("refreshToken", { path: "/" });
-      res.json({ message: "Logged out" });
-}
+export const logoutAdmin = async (req: Request, res: Response) => {
+  res.clearCookie("adminAccessToken");
+  res.clearCookie("adminRefreshToken");
+
+  res.json({ message: "Logged out" });
+};
 
 export const fetchIssuers = async (req: Request, res: Response) => {
   try {
@@ -86,6 +97,33 @@ export const fetchIssuers = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch issuers",
+    });
+  }
+};
+
+export const getAdminMe = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden",
+      });
+    }
+
+    const admin = await adminService.getById(req.user.userId);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: admin.id,
+        email: admin.email,
+        role: admin.role,
+      },
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch admin",
     });
   }
 };

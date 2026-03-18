@@ -16,6 +16,11 @@ export const adminRepository = {
       },
     }),
 
+  getAdminById: (id: string) =>
+    prisma.admin.findUnique({
+      where: { id },
+    }),
+
   getIssuers: (status?: IssuerStatus) =>
     prisma.issuer.findMany({
       where: status ? { status } : undefined,

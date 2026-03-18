@@ -31,6 +31,16 @@ export const adminService = {
     return admin;
   },
 
+  getById: async (id: string) => {
+    const admin = await adminRepository.getAdminById(id);
+
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    return admin;
+  },
+
   fetchIssuers: async (status?: IssuerStatus) => {
     return adminRepository.getIssuers(status);
   },

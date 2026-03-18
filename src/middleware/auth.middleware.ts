@@ -14,31 +14,38 @@ export interface AuthRequest extends Request {
     role: UserRole;
   };
 }
-
 export const authMiddleware = (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies?.accessToken;
+    const tokens = [
+      req.cookies?.adminAccessToken,
+      req.cookies?.issuerAccessToken,
+      req.cookies?.candidateAccessToken,
+    ];
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - No token",
-      });
+    let decoded: { userId: string; role: UserRole } | null = null;
+
+    for (const token of tokens) {
+      if (!token) continue;
+
+      const result = verifyAccessToken(
+        token,
+        process.env.ACCESS_TOKEN_SECRET!,
+      ) as { userId: string; role: UserRole } | null;
+
+      if (result) {
+        decoded = result;
+        break;
+      }
     }
-
-    const decoded = verifyAccessToken(
-      token,
-      process.env.ACCESS_TOKEN_SECRET!,
-    ) as { userId: string; role: UserRole } | null;
 
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        message: "Invalid or expired token",
+        message: "Unauthorized - Invalid or missing token",
       });
     }
 
@@ -46,9 +53,9 @@ export const authMiddleware = (
       userId: decoded.userId,
       role: decoded.role,
     };
-  
+
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Authentication failed",
