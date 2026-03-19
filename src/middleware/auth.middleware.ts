@@ -14,38 +14,39 @@ export interface AuthRequest extends Request {
     role: UserRole;
   };
 }
+
 export const authMiddleware = (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const tokens = [
-      req.cookies?.adminAccessToken,
-      req.cookies?.issuerAccessToken,
-      req.cookies?.candidateAccessToken,
-    ];
+    let token: string | undefined;
 
-    let decoded: { userId: string; role: UserRole } | null = null;
-
-    for (const token of tokens) {
-      if (!token) continue;
-
-      const result = verifyAccessToken(
-        token,
-        process.env.ACCESS_TOKEN_SECRET!,
-      ) as { userId: string; role: UserRole } | null;
-
-      if (result) {
-        decoded = result;
-        break;
-      }
+    if (req.cookies?.adminAccessToken) {
+      token = req.cookies.adminAccessToken;
+    } else if (req.cookies?.issuerAccessToken) {
+      token = req.cookies.issuerAccessToken;
+    } else if (req.cookies?.candidateAccessToken) {
+      token = req.cookies.candidateAccessToken;
     }
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - No token",
+      });
+    }
+
+    const decoded = verifyAccessToken(
+      token,
+      process.env.ACCESS_TOKEN_SECRET!,
+    ) as { userId: string; role: UserRole } | null;
 
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized - Invalid or missing token",
+        message: "Unauthorized - Invalid token",
       });
     }
 

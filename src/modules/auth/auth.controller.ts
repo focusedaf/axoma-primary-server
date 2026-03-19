@@ -115,16 +115,25 @@ export const authController = {
   },
 
   async refreshToken(req: Request, res: Response) {
-    const token =
-      req.cookies?.adminRefreshToken ||
-      req.cookies?.issuerRefreshToken ||
-      req.cookies?.candidateRefreshToken;
-
-    if (!token) {
-      return res.status(401).json({ message: "No refresh token provided" });
-    }
-
     try {
+      let token: string | undefined;
+      let role: "admin" | "issuer" | "candidate" | null = null;
+
+      if (req.cookies?.adminRefreshToken) {
+        token = req.cookies.adminRefreshToken;
+        role = "admin";
+      } else if (req.cookies?.issuerRefreshToken) {
+        token = req.cookies.issuerRefreshToken;
+        role = "issuer";
+      } else if (req.cookies?.candidateRefreshToken) {
+        token = req.cookies.candidateRefreshToken;
+        role = "candidate";
+      }
+
+      if (!token || !role) {
+        return res.status(401).json({ message: "No refresh token provided" });
+      }
+
       const payload = verifyRefreshToken(
         token,
         process.env.REFRESH_TOKEN_SECRET!,
@@ -140,20 +149,38 @@ export const authController = {
         process.env.REFRESH_TOKEN_SECRET!,
       );
 
-      if (payload.role === "admin") {
-        res.cookie("adminAccessToken", accessToken, { httpOnly: true });
-        res.cookie("adminRefreshToken", refreshToken, { httpOnly: true });
-      } else if (payload.role === "candidate") {
-        res.cookie("candidateAccessToken", accessToken, { httpOnly: true });
-        res.cookie("candidateRefreshToken", refreshToken, { httpOnly: true });
+      if (role === "admin") {
+        res.cookie("adminAccessToken", accessToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
+        res.cookie("adminRefreshToken", refreshToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
+      } else if (role === "candidate") {
+        res.cookie("candidateAccessToken", accessToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
+        res.cookie("candidateRefreshToken", refreshToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
       } else {
-        res.cookie("issuerAccessToken", accessToken, { httpOnly: true });
-        res.cookie("issuerRefreshToken", refreshToken, { httpOnly: true });
+        res.cookie("issuerAccessToken", accessToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
+        res.cookie("issuerRefreshToken", refreshToken, {
+          httpOnly: true,
+          sameSite: "lax",
+        });
       }
 
-      res.json({ message: "Tokens refreshed" });
+      return res.json({ message: "Tokens refreshed" });
     } catch (err: any) {
-      res.status(401).json({ message: err.message });
+      return res.status(401).json({ message: err.message });
     }
   },
 
