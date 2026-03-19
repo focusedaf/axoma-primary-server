@@ -13,11 +13,13 @@ export const authController = {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
       res.cookie("candidateRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
 
       res.status(201).json({ user });
@@ -35,11 +37,13 @@ export const authController = {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
       res.cookie("candidateRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
 
       res.status(200).json({ user });
@@ -57,11 +61,13 @@ export const authController = {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
       res.cookie("issuerRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
 
       res.status(201).json({ user });
@@ -79,11 +85,13 @@ export const authController = {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
       res.cookie("issuerRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
+        path: "/",
       });
 
       res.status(200).json({ user });
@@ -113,24 +121,20 @@ export const authController = {
 
     return res.status(403).json({ message: "Invalid role" });
   },
-
   async refreshToken(req: Request, res: Response) {
     try {
       let token: string | undefined;
-      let role: "admin" | "issuer" | "candidate" | null = null;
 
+   
       if (req.cookies?.adminRefreshToken) {
         token = req.cookies.adminRefreshToken;
-        role = "admin";
       } else if (req.cookies?.issuerRefreshToken) {
         token = req.cookies.issuerRefreshToken;
-        role = "issuer";
       } else if (req.cookies?.candidateRefreshToken) {
         token = req.cookies.candidateRefreshToken;
-        role = "candidate";
       }
 
-      if (!token || !role) {
+      if (!token) {
         return res.status(401).json({ message: "No refresh token provided" });
       }
 
@@ -143,13 +147,15 @@ export const authController = {
         throw new Error("Invalid refresh token");
       }
 
+    
       const { accessToken, refreshToken } = rotateTokens(
         { userId: payload.userId, role: payload.role },
         process.env.ACCESS_TOKEN_SECRET!,
         process.env.REFRESH_TOKEN_SECRET!,
       );
 
-      if (role === "admin") {
+    
+      if (payload.role === "admin") {
         res.cookie("adminAccessToken", accessToken, {
           httpOnly: true,
           sameSite: "lax",
@@ -158,7 +164,7 @@ export const authController = {
           httpOnly: true,
           sameSite: "lax",
         });
-      } else if (role === "candidate") {
+      } else if (payload.role === "candidate") {
         res.cookie("candidateAccessToken", accessToken, {
           httpOnly: true,
           sameSite: "lax",

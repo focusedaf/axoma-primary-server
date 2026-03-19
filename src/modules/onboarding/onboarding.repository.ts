@@ -39,14 +39,23 @@ export const onboardingRepository = {
       where: { issuerId: userId },
     }),
 
-  addIssuerDocuments: (userId: string, files: string[]) =>
-    prisma.issuerDocument.createMany({
-      data: files.map((url) => ({
-        issuerId: userId,
-        fileUrl: url,
-        type: "docs",
-      })),
-    }),
+  addIssuerDocuments: async (userId: string, files: string[]) => {
+    const createdDocs = await Promise.all(
+      files.map((url) =>
+        prisma.issuerDocument.create({
+          data: {
+            issuerId: userId,
+            fileUrl: url,
+            type: "docs",
+          },
+        }),
+      ),
+    );
+
+    console.log("CREATED DOCS:", createdDocs);
+
+    return createdDocs;
+  },
 
   // CANDIDATE
 

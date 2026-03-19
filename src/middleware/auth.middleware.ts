@@ -20,6 +20,7 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
+  console.log("COOKIES:", req.cookies);
   try {
     let token: string | undefined;
 
@@ -37,7 +38,7 @@ export const authMiddleware = (
         message: "Unauthorized - No token",
       });
     }
-
+    console.log("TOKEN:", token);
     const decoded = verifyAccessToken(
       token,
       process.env.ACCESS_TOKEN_SECRET!,
@@ -49,7 +50,7 @@ export const authMiddleware = (
         message: "Unauthorized - Invalid token",
       });
     }
-
+    console.log("DECODED:", decoded);
     req.user = {
       userId: decoded.userId,
       role: decoded.role,

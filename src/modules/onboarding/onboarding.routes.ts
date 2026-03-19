@@ -4,11 +4,17 @@ import { authMiddleware } from "../../middleware/auth.middleware";
 import { upload } from "../../middleware/multer.middleware";
 
 const OnboardingRouter = Router();
+OnboardingRouter.post(
+  "/profile",
+  authMiddleware,
+  onboardingController.upsertProfile,
+);
 
-OnboardingRouter.use(authMiddleware);
-
-OnboardingRouter.post("/profile", onboardingController.upsertProfile);
-OnboardingRouter.get("/profile", onboardingController.getProfile);
+OnboardingRouter.get(
+  "/profile",
+  authMiddleware,
+  onboardingController.getProfile,
+);
 
 OnboardingRouter.post(
   "/documents",

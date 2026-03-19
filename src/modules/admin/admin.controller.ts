@@ -44,11 +44,13 @@ export const loginAdmin = async (req: Request, res: Response) => {
     res.cookie("adminAccessToken", accessToken, {
       httpOnly: true,
       sameSite: "lax",
+      path: "/",
     });
 
     res.cookie("adminRefreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "lax",
+      path: "/",
     });
 
     return res.status(200).json({
