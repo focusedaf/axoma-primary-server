@@ -40,21 +40,18 @@ export const onboardingRepository = {
     }),
 
   addIssuerDocuments: async (userId: string, files: string[]) => {
-    const createdDocs = await Promise.all(
-      files.map((url) =>
-        prisma.issuerDocument.create({
-          data: {
-            issuerId: userId,
-            fileUrl: url,
-            type: "docs",
-          },
-        }),
-      ),
-    );
+    await prisma.issuerDocument.createMany({
+      data: files.map((url) => ({
+        issuerId: userId,
+        fileUrl: url,
+        type: "docs",
+      })),
+    });
 
-    console.log("CREATED DOCS:", createdDocs);
-
-    return createdDocs;
+    return prisma.issuerDocument.findMany({
+      where: { issuerId: userId },
+      orderBy: { createdAt: "desc" },
+    });
   },
 
   // CANDIDATE
@@ -71,12 +68,18 @@ export const onboardingRepository = {
       where: { candidateId: userId },
     }),
 
-  addCandidateDocuments: (userId: string, files: string[]) =>
-    prisma.candidateDocument.createMany({
+  addCandidateDocuments: async (userId: string, files: string[]) => {
+    await prisma.candidateDocument.createMany({
       data: files.map((url) => ({
         candidateId: userId,
         fileUrl: url,
         type: "docs",
       })),
-    }),
+    });
+
+    return prisma.candidateDocument.findMany({
+      where: { candidateId: userId },
+      orderBy: { createdAt: "desc" },
+    });
+  },
 };

@@ -67,29 +67,29 @@ export const onboardingController = {
       if (!files || files.length === 0)
         return res.status(400).json({ message: "No files uploaded" });
 
-      const urls: string[] = [];
+      const uploadPromises = files.map((file) => {
+        return new Promise<UploadApiResponse>((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: "issuer-docs",
+                resource_type: "auto",
+                access_mode: "public",
+                flags: "attachment:false",
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else if (result) resolve(result);
+                else reject(new Error("Unknown Cloudinary error"));
+              },
+            )
+            .end(file.buffer);
+        });
+      });
 
-      for (const file of files) {
-        const result = await new Promise<UploadApiResponse>(
-          (resolve, reject) => {
-            cloudinary.uploader
-              .upload_stream(
-                {
-                  folder: "issuer-docs",
-                  resource_type: "auto",
-                  access_mode: "public",
-                },
-                (error, result) => {
-                  if (error) reject(error);
-                  else if (result) resolve(result);
-                  else reject(new Error("Unknown Cloudinary error"));
-                },
-              )
-              .end(file.buffer);
-          },
-        );
-        urls.push(result.secure_url);
-      }
+      const results = await Promise.all(uploadPromises);
+
+      const urls = results.map((r) => r.secure_url);
 
       await onboardingService.addDocuments(
         req.user.userId,
