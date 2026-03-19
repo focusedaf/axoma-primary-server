@@ -142,3 +142,62 @@ model CandidateDocument {
 
   candidate   Candidate @relation(fields: [candidateId], references: [id])
 }
+
+model Exam {
+  id        String   @id @default(uuid())
+  title     String
+  duration  Int
+  cid       String   // IPFS CID
+  issuerId  String
+  createdAt DateTime @default(now())
+
+  attempts  Attempt[]
+  results   Result[]
+  violations Violation[]
+  candidates ExamCandidate[]
+}
+
+model Attempt {
+  id           String   @id @default(uuid())
+  examId       String
+  candidateId  String
+  fingerprint  String
+  startedAt    DateTime @default(now())
+  submittedAt  DateTime?
+  status       String   // in_progress, submitted, auto_submitted
+
+  exam         Exam     @relation(fields: [examId], references: [id])
+}
+
+model Result {
+  id          String   @id @default(uuid())
+  examId      String
+  candidateId String
+  score       Float
+  answers     Json
+  createdAt   DateTime @default(now())
+
+  exam        Exam     @relation(fields: [examId], references: [id])
+}
+
+model Violation {
+  id          String   @id @default(uuid())
+  examId      String
+  candidateId String
+  type        String
+  severity    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  exam        Exam     @relation(fields: [examId], references: [id])
+}
+
+model ExamCandidate {
+  id          String   @id @default(uuid())
+  examId      String
+  candidateId String?
+  email       String
+  allowed     Boolean  @default(true)
+
+  exam        Exam     @relation(fields: [examId], references: [id])
+}
