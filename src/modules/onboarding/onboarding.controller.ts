@@ -76,7 +76,7 @@ export const onboardingController = {
               .upload_stream(
                 {
                   folder: "issuer-docs",
-                  resource_type: "raw",
+                  resource_type: "auto",
                   access_mode: "public",
                 },
                 (error, result) => {
