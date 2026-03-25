@@ -150,7 +150,9 @@ model Exam {
   cid       String   // IPFS CID
   issuerId  String
   createdAt DateTime @default(now())
-
+  status    String 
+  scheduledOn DateTime 
+  
   attempts  Attempt[]
   results   Result[]
   violations Violation[]

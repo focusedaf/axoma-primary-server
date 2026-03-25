@@ -28,6 +28,8 @@ export const candidateAuthService = {
         id: candidate.id,
         email: candidate.email,
         role: "candidate",
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
       },
       ...tokens,
     };
@@ -51,6 +53,8 @@ export const candidateAuthService = {
         id: candidate.id,
         email: candidate.email,
         role: "candidate",
+        firstName: candidate.firstName, 
+        lastName: candidate.lastName,
       },
       ...tokens,
     };
@@ -59,6 +63,12 @@ export const candidateAuthService = {
   getById: async (id: string) => {
     const candidate = await candidateRepository.findById(id);
     if (!candidate) throw new Error("Candidate not found");
-    return { id: candidate.id, email: candidate.email, role: "candidate" };
+    return {
+      id: candidate.id,
+      email: candidate.email,
+      role: "candidate",
+      firstName: candidate.firstName, 
+      lastName: candidate.lastName,
+    };
   },
 };

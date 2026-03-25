@@ -23,3 +23,17 @@ export async function isCandidateAllowed(examId: string, email: string) {
 
   return !!record;
 }
+
+export async function getAllExams() {
+  return prisma.exam.findMany({
+    select: {
+      id: true,
+      title: true,
+      scheduledOn: true,
+      status: true,
+    },
+    orderBy: {
+      scheduledOn: "asc",
+    },
+  });
+}

@@ -5,6 +5,16 @@ export async function lockAttempt(
   candidateId: string,
   fingerprint: string,
 ) {
+  const existing = await prisma.attempt.findFirst({
+    where: {
+      examId,
+      candidateId,
+      status: "in_progress",
+    },
+  });
+
+  if (existing) return existing;
+
   return prisma.attempt.create({
     data: {
       examId,

@@ -1,20 +1,15 @@
 import { Router } from "express";
-import { getCandidateDashboard } from "./candidate-dashboard.service";
-import { AuthRequest } from "../../middleware/auth.middleware";
+import { getDashboardController } from "./dashboard.controller";
+import { authMiddleware } from "../../middleware/auth.middleware";
+import { roleMiddleware } from "../../middleware/role.middleware";
 
 const DashboardRouter = Router();
 
-DashboardRouter.get("/", async (req: AuthRequest, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const candidateId = req.user.userId;
-
-  const data = await getCandidateDashboard(candidateId);
-
-  res.json(data);
-});
-
+DashboardRouter.get(
+  "/",
+  authMiddleware,
+  roleMiddleware(["candidate"]),
+  getDashboardController,
+);
 
 export default DashboardRouter;

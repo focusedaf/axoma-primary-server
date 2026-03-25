@@ -1,23 +1,15 @@
 import { Router } from "express";
-import prisma from "../../db/db";
-import { AuthRequest } from "../../middleware/auth.middleware";
+import { getResultController } from "./results.controller";
+import { authMiddleware } from "../../middleware/auth.middleware";
+import { roleMiddleware } from "../../middleware/role.middleware";
 
 const ResultRouter = Router();
 
-ResultRouter.get("/:examId", async (req: AuthRequest, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+ResultRouter.get(
+  "/:examId",
+  authMiddleware,
+  roleMiddleware(["candidate"]),
+  getResultController,
+);
 
-  const candidateId = req.user.userId;
-
-  const result = await prisma.result.findFirst({
-    where: {
-      examId: req.params.examId,
-      candidateId,
-    },
-  });
-
-  res.json(result);
-});
 export default ResultRouter;

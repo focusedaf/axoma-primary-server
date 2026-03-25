@@ -12,3 +12,14 @@ export async function getExam(req: Request, res: Response) {
 
   res.json(exam);
 }
+
+
+export async function getAllExams(req: Request, res: Response) {
+  try {
+    const exams = await examService.getAllExams();
+    res.json(exams);
+  } catch (err) {
+    console.error("Get all exams error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
