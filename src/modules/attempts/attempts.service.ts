@@ -66,3 +66,19 @@ export async function submitAttempt(
     }),
   ]);
 }
+
+
+export async function getAttemptsByExam(
+  examId: string,
+  issuerId: string,
+) {
+  return prisma.attempt.findMany({
+    where: {
+      examId,
+      exam: { issuerId },
+    },
+    include: {
+      exam: true,
+    },
+  });
+}

@@ -5,16 +5,12 @@ import cookieParser from "cookie-parser";
 import AuthRouter from "./modules/auth/auth.routes";
 import OnboardingRouter from "./modules/onboarding/onboarding.routes";
 import AdminRouter from "./modules/admin/admin.routes";
-import examsRoutes from "./modules/exams/exams.routes";
-import attemptsRoutes from "./modules/attempts/attempts.routes";
-import resultsRoutes from "./modules/results/results.routes";
-import violationsRoutes from "./modules/violations/violations.routes";
-import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import DashboardRouter from "./modules/dashboard/dashboard.routes";
 import ViolationRouter from "./modules/violations/violations.routes";
 import ResultRouter from "./modules/results/results.routes";
 import AttemptRouter from "./modules/attempts/attempts.routes";
 import ExamRouter from "./modules/exams/exams.routes";
+import IssuerRouter from "./modules/issuer/issuer.routes";
 
 const app = express();
 
@@ -35,6 +31,7 @@ app.use("/api/v1", AttemptRouter);
 app.use("/api/v1/results", ResultRouter);
 app.use("/api/v1/violations", ViolationRouter);
 app.use("/api/v1/dashboard", DashboardRouter);
+app.use("/api/v1/issuer", IssuerRouter);
 
 app.listen(env.PORT, () => {
   console.log(`Server running on http://localhost:${env.PORT}`);

@@ -1,0 +1,48 @@
+[
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_examId", "type": "uint256" },
+      { "internalType": "string", "name": "_ipfsHash", "type": "string" }
+    ],
+    "name": "publishResult",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_resultId", "type": "uint256" }
+    ],
+    "name": "deactivateResult",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_resultId", "type": "uint256" }
+    ],
+    "name": "getResult",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "uint256", "name": "examId", "type": "uint256" },
+          { "internalType": "address", "name": "issuer", "type": "address" },
+          { "internalType": "string", "name": "ipfsHash", "type": "string" },
+          {
+            "internalType": "uint256",
+            "name": "publishedAt",
+            "type": "uint256"
+          },
+          { "internalType": "bool", "name": "active", "type": "bool" }
+        ],
+        "internalType": "struct ResultRegistry.Result",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

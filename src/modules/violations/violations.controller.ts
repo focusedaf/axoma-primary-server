@@ -12,11 +12,20 @@ export const createViolationController = async (
   next: NextFunction,
 ) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    let candidateId: string;
 
-    const candidateId = req.user.userId;
+    if (req.headers["x-service-token"] === process.env.SERVICE_TOKEN) {
+      candidateId = req.body.candidateId;
+
+      if (!candidateId) {
+        return res.status(400).json({ message: "Missing candidateId" });
+      }
+    } else {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      candidateId = req.user.userId;
+    }
 
     const { examId, type, severity, metadata } = req.body;
 

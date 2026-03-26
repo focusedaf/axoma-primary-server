@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  registerAdmin,
   loginAdmin,
   logoutAdmin,
   fetchIssuers,
@@ -8,14 +7,11 @@ import {
   suspendIssuer,
   getAdminMe,
 } from "./admin.controller";
-
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { roleMiddleware } from "../../middleware/role.middleware";
 
-
 const AdminRouter = Router();
 
-AdminRouter.post("/register", registerAdmin);
 AdminRouter.post("/login", loginAdmin);
 AdminRouter.post("/logout", logoutAdmin);
 

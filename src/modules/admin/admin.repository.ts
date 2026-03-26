@@ -7,15 +7,6 @@ export const adminRepository = {
       where: { email },
     }),
 
-  createAdmin: (email: string, hashedPassword: string) =>
-    prisma.admin.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: "admin",
-      },
-    }),
-
   getAdminById: (id: string) =>
     prisma.admin.findUnique({
       where: { id },

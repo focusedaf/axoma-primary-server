@@ -18,6 +18,7 @@ async function main() {
       email: "admin@test.com",
       password: hashedPassword,
       role: "admin",
+      walletAddress: process.env.ADMIN_WALLET_ADDRESS!,
     },
   });
 

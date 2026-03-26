@@ -4,28 +4,6 @@ import { IssuerStatus } from "../../db/generated/prisma";
 import { rotateTokens } from "../../utils/helper";
 import { AuthRequest } from "../../middleware/auth.middleware";
 
-export const registerAdmin = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    const admin = await adminService.register(email, password);
-
-    return res.status(201).json({
-      success: true,
-      message: "Admin registered successfully",
-      data: {
-        id: admin.id,
-        email: admin.email,
-      },
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
 export const loginAdmin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;

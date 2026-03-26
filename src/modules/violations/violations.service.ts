@@ -34,3 +34,15 @@ export async function getAllViolations(candidateId: string) {
     },
   });
 }
+
+export async function getViolationsByExam(examId: string, issuerId: string) {
+  return prisma.violation.findMany({
+    where: {
+      examId,
+      exam: { issuerId },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
