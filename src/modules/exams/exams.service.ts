@@ -72,56 +72,38 @@ export async function saveDraftExam(data: {
   questions?: any;
   examType?: string;
 }) {
-  try {
-    const updateData: any = {
-      title: data.title ?? "Untitled Draft",
-      duration: data.duration ?? 0,
-      instructions: data.instructions ?? "",
-      examType: data.examType ?? "mcq",
-      status: "Draft",
-    };
+  const updateData: any = {
+    title: data.title ?? "Untitled Draft",
+    duration: data.duration ?? 0,
+    instructions: data.instructions ?? "",
+    examType: data.examType ?? "mcq",
+    status: "Draft",
+    questions: data.questions ?? [],
+    scheduledOn: data.scheduledOn ? new Date(data.scheduledOn) : null,
+  };
 
-    if (data.scheduledOn) {
-      updateData.scheduledOn = new Date(data.scheduledOn);
-    }
-
-    if (data.questions) {
-      updateData.questions = data.questions;
-    }
-
-    if (data.id) {
-      /**
-       * SAFE UPDATE (NO P6000)
-       */
-      await prisma.exam.updateMany({
-        where: {
-          id: data.id,
-          issuerId: data.issuerId,
-        },
-        data: updateData,
-      });
-
-      return prisma.exam.findUnique({
-        where: { id: data.id },
-      });
-    }
-
-    /**
-     * CREATE
-     */
-    return prisma.exam.create({
-      data: {
-        ...updateData,
-        cid: "DRAFT",
+  if (data.id) {
+    // update existing draft
+    await prisma.exam.updateMany({
+      where: {
+        id: data.id,
         issuerId: data.issuerId,
-        scheduledOn: updateData.scheduledOn ?? new Date(),
-        questions: updateData.questions ?? [],
+        status: "Draft",
       },
+      data: updateData,
     });
-  } catch (err) {
-    console.error("Draft save error:", err);
-    throw err;
+
+    return prisma.exam.findUnique({ where: { id: data.id } });
   }
+
+  // create new draft
+  return prisma.exam.create({
+    data: {
+      ...updateData,
+      cid: "DRAFT",
+      issuerId: data.issuerId,
+    },
+  });
 }
 
 export async function getDraftsByIssuer(issuerId: string) {
@@ -162,6 +144,7 @@ export async function getExamsByIssuer(issuerId: string) {
       title: true,
       scheduledOn: true,
       status: true,
+      published: true,
     },
   });
 }

@@ -1,18 +1,26 @@
 import { Request, Response } from "express";
+import prisma from "../../db/db";
 import * as examService from "./exams.service";
 import { uploadExamToIPFS } from "./ipfs.service";
 import { AuthRequest } from "../../middleware/auth.middleware";
 
+function normalizeParam(param: string | string[]): string {
+  if (Array.isArray(param)) return param[0];
+  return param;
+}
+
 export async function getExam(req: Request, res: Response) {
-  const id = req.params.id as string;
+  try {
+    const id = normalizeParam(req.params.id);
+    const exam = await examService.getExamById(id);
 
-  const exam = await examService.getExamById(id);
+    if (!exam) return res.status(404).json({ message: "Exam not found" });
 
-  if (!exam) {
-    return res.status(404).json({ message: "Exam not found" });
+    res.json(exam);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  res.json(exam);
 }
 
 export async function getAllExams(req: Request, res: Response) {
@@ -27,11 +35,10 @@ export async function getAllExams(req: Request, res: Response) {
 
 export async function createExam(req: AuthRequest, res: Response) {
   try {
-    const { title, duration, scheduledOn, questions, draftId } = req.body;
-
-    if (!req.user?.userId) {
+    if (!req.user?.userId)
       return res.status(401).json({ message: "Unauthorized" });
-    }
+
+    const { title, duration, scheduledOn, questions, draftId } = req.body;
 
     const cid = await uploadExamToIPFS({
       title,
@@ -48,28 +55,20 @@ export async function createExam(req: AuthRequest, res: Response) {
       issuerId: req.user.userId,
     });
 
-    /**
-     * DELETE DRAFT AFTER PUBLISH
-     */
-    if (draftId) {
-      await examService.deleteDraft(draftId, req.user.userId);
-    }
+    if (draftId) await examService.deleteDraft(draftId, req.user.userId);
 
-    res.status(201).json({
-      ...exam,
-      cid,
-    });
+    res.status(201).json({ ...exam, cid });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
   }
 }
 
-/**
- * FINAL DRAFT SAVE (SAFE UPDATE)
- */
 export async function saveDraft(req: AuthRequest, res: Response) {
   try {
+    if (!req.user?.userId)
+      return res.status(401).json({ message: "Unauthorized" });
+
     const {
       id,
       title,
@@ -80,11 +79,7 @@ export async function saveDraft(req: AuthRequest, res: Response) {
       examType,
     } = req.body;
 
-    if (!req.user?.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const exam = await examService.saveDraftExam({
+    const draft = await examService.saveDraftExam({
       id,
       title,
       duration: duration ? Number(duration) : undefined,
@@ -95,10 +90,27 @@ export async function saveDraft(req: AuthRequest, res: Response) {
       examType,
     });
 
-    res.status(200).json(exam);
+    res.status(200).json(draft);
   } catch (err) {
     console.error("SAVE DRAFT ERROR:", err);
     res.status(500).json({ message: "Failed to save draft" });
+  }
+}
+
+export async function getDraftById(req: AuthRequest, res: Response) {
+  try {
+    const id = normalizeParam(req.params.id);
+
+    if (!id) return res.status(400).json({ message: "Invalid draft id" });
+
+    const draft = await examService.getDraftById(id, req.user!.userId);
+
+    if (!draft) return res.status(404).json({ message: "Draft not found" });
+
+    res.json(draft);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch draft" });
   }
 }
 
@@ -112,38 +124,12 @@ export async function getMyDrafts(req: AuthRequest, res: Response) {
   }
 }
 
-export async function getDraftById(req: AuthRequest, res: Response) {
-  try {
-    const rawId = req.params.id;
-
-    // FIX: normalize to string
-    const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
-    if (!id) {
-      return res.status(400).json({ message: "Invalid draft id" });
-    }
-
-    const draft = await examService.getDraftById(id, req.user!.userId);
-
-    if (!draft) {
-      return res.status(404).json({ message: "Draft not found" });
-    }
-
-    res.json(draft);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch draft" });
-  }
-}
-
 export async function getMyExams(req: AuthRequest, res: Response) {
   try {
-    if (!req.user?.userId) {
+    if (!req.user?.userId)
       return res.status(401).json({ message: "Unauthorized" });
-    }
 
     const exams = await examService.getExamsByIssuer(req.user.userId);
-
     res.json(exams);
   } catch (err) {
     console.error(err);
@@ -151,3 +137,24 @@ export async function getMyExams(req: AuthRequest, res: Response) {
   }
 }
 
+export async function markPublished(req: AuthRequest, res: Response) {
+  try {
+    const examId = normalizeParam(req.params.examId);
+    const { txHash, publishedAt } = req.body;
+
+    const exam = await prisma.exam.update({
+      where: { id: examId },
+      data: {
+        txHash,
+        publishedAt: new Date(publishedAt),
+        status: "Upcoming",
+        published: true,
+      },
+    });
+
+    res.json(exam);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to mark as published" });
+  }
+}

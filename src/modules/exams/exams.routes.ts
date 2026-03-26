@@ -7,6 +7,7 @@ import {
   getMyDrafts,
   getDraftById,
   getMyExams,
+  markPublished,
 } from "./exams.controller";
 
 import { authMiddleware } from "../../middleware/auth.middleware";
@@ -54,11 +55,17 @@ ExamRouter.get(
   roleMiddleware(["professor", "institution", "recruiter"]),
   getMyExams,
 );
+
+ExamRouter.post(
+  "/:examId/mark-published",
+  authMiddleware,
+  roleMiddleware(["professor", "institution"]),
+  markPublished,
+);
 /**
  * EXAMS (CANDIDATE)
  */
 ExamRouter.get("/", authMiddleware, roleMiddleware(["candidate"]), getAllExams);
-
 ExamRouter.get("/:id", authMiddleware, roleMiddleware(["candidate"]), getExam);
 
 export default ExamRouter;

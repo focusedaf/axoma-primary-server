@@ -154,11 +154,14 @@ model Exam {
   issuerId  String
   createdAt DateTime @default(now())
   status    String 
-  scheduledOn DateTime 
+  scheduledOn DateTime?
+  scheduledOnDraft String?
   questions    Json?   
   examType     String? 
   instructions String? 
-
+  published   Boolean  @default(false) 
+  txHash      String?
+  publishedAt DateTime?
   attempts  Attempt[]
   results   Result[]
   violations Violation[]

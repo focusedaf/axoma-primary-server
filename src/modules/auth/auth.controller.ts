@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { authCoreService } from "./auth.core.service";
 import { AuthRequest } from "../../middleware/auth.middleware";
-import { rotateTokens,verifyRefreshToken } from "../../utils/helper";
 
 export const authController = {
   async candidateRegister(req: Request, res: Response) {
@@ -12,13 +11,13 @@ export const authController = {
       res.cookie("candidateAccessToken", accessToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
       res.cookie("candidateRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
 
@@ -36,13 +35,13 @@ export const authController = {
       res.cookie("candidateAccessToken", accessToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
       res.cookie("candidateRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
 
@@ -60,13 +59,13 @@ export const authController = {
       res.cookie("issuerAccessToken", accessToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
       res.cookie("issuerRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
 
@@ -84,13 +83,13 @@ export const authController = {
       res.cookie("issuerAccessToken", accessToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
       res.cookie("issuerRefreshToken", refreshToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
       });
 
@@ -101,88 +100,42 @@ export const authController = {
   },
 
   async me(req: AuthRequest, res: Response) {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
     if (req.user.role === "candidate") {
       const user = await authCoreService.getCandidateById(req.user.userId);
       return res.json({ user });
     }
 
-    if (
-      req.user.role === "institution" ||
-      req.user.role === "professor" ||
-      req.user.role === "recruiter"
-    ) {
-      const user = await authCoreService.getIssuerById(req.user.userId);
-      return res.json({ user });
-    }
-
-    return res.status(403).json({ message: "Invalid role" });
+    const user = await authCoreService.getIssuerById(req.user.userId);
+    return res.json({ user });
   },
+
   async refreshToken(req: Request, res: Response) {
     try {
-      let token: string | undefined;
+      const token =
+        req.cookies?.adminRefreshToken ||
+        req.cookies?.issuerRefreshToken ||
+        req.cookies?.candidateRefreshToken;
 
-   
-      if (req.cookies?.adminRefreshToken) {
-        token = req.cookies.adminRefreshToken;
-      } else if (req.cookies?.issuerRefreshToken) {
-        token = req.cookies.issuerRefreshToken;
-      } else if (req.cookies?.candidateRefreshToken) {
-        token = req.cookies.candidateRefreshToken;
-      }
+      if (!token) return res.status(401).json({ message: "No refresh token" });
 
-      if (!token) {
-        return res.status(401).json({ message: "No refresh token provided" });
-      }
+      const { accessToken, refreshToken } =
+        await authCoreService.refreshTokens(token);
 
-      const payload = verifyRefreshToken(
-        token,
-        process.env.REFRESH_TOKEN_SECRET!,
-      );
+      const role =
+        (req.cookies?.adminRefreshToken && "admin") ||
+        (req.cookies?.candidateRefreshToken && "candidate") ||
+        "issuer";
 
-      if (!payload) {
-        throw new Error("Invalid refresh token");
-      }
-
-    
-      const { accessToken, refreshToken } = rotateTokens(
-        { userId: payload.userId, role: payload.role },
-        process.env.ACCESS_TOKEN_SECRET!,
-        process.env.REFRESH_TOKEN_SECRET!,
-      );
-
-    
-      if (payload.role === "admin") {
-        res.cookie("adminAccessToken", accessToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-        res.cookie("adminRefreshToken", refreshToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-      } else if (payload.role === "candidate") {
-        res.cookie("candidateAccessToken", accessToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-        res.cookie("candidateRefreshToken", refreshToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-      } else {
-        res.cookie("issuerAccessToken", accessToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-        res.cookie("issuerRefreshToken", refreshToken, {
-          httpOnly: true,
-          sameSite: "lax",
-        });
-      }
+      res.cookie(`${role}AccessToken`, accessToken, {
+        httpOnly: true,
+        sameSite: "lax",
+      });
+      res.cookie(`${role}RefreshToken`, refreshToken, {
+        httpOnly: true,
+        sameSite: "lax",
+      });
 
       return res.json({ message: "Tokens refreshed" });
     } catch (err: any) {
@@ -195,6 +148,7 @@ export const authController = {
     res.clearCookie("issuerRefreshToken");
     res.clearCookie("candidateAccessToken");
     res.clearCookie("candidateRefreshToken");
+   
 
     res.json({ message: "Logged out" });
   },

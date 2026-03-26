@@ -1,6 +1,4 @@
-// request validation schema
-
-import z from "zod";
+import { z } from "zod";
 
 export const candidateRegisterSchema = z.object({
   firstName: z.string(),

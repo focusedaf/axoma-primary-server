@@ -12,7 +12,6 @@ export const authCoreService = {
   getIssuerById: issuerAuthService.getById,
 
   refreshTokens: async (refreshToken: string) => {
-    
     const payload = verifyRefreshToken(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!,
