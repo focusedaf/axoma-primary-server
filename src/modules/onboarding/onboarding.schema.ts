@@ -11,16 +11,14 @@ export const candidateOnboardingSchema = z.object({
 });
 
 
-
 export const professorOnboardingSchema = z.object({
   universityName: z.string().min(1),
   collegeName: z.string().min(1),
   department: z.string().min(1),
   designation: z.string().min(1),
   employmentType: z.enum(["full_time", "visiting", "contract"]),
-  joiningYear: z.number().min(1900).max(new Date().getFullYear()),
+  joiningYear: z.string().regex(/^\d{4}$/, "Joining year must be 4 digits"),
 });
-
 
 
 export const recruiterOnboardingSchema = z.object({
@@ -31,9 +29,8 @@ export const recruiterOnboardingSchema = z.object({
   employmentType: z.enum(["full_time", "part_time", "contract", "intern"]),
   companyWebsite: z.string().url().optional(),
   linkedinProfile: z.string().url().optional(),
-  joiningYear: z.number().min(1900).max(new Date().getFullYear()),
+  joiningYear: z.string().regex(/^\d{4}$/, "Joining year must be 4 digits"),
 });
-
 
 
 export const institutionOnboardingSchema = z.object({
@@ -48,9 +45,8 @@ export const institutionOnboardingSchema = z.object({
     "training_institute",
   ]),
   institutionWebsite: z.string().url().optional(),
-  yearEstablished: z.number().min(1800).max(new Date().getFullYear()),
+  yearEstablished: z.string().regex(/^\d{4}$/, "Year must be 4 digits"),
 });
-
 
 
 export const getOnboardingSchemaByRole = (role: string) => {

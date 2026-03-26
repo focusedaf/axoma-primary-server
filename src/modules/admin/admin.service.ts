@@ -3,7 +3,7 @@ import prisma from "../../db/db";
 import { IssuerStatus } from "../../db/generated/prisma";
 import { adminRepository } from "./admin.repository";
 import { ethers } from "ethers";
-import IssuerRegistryABI from "../../abi/IssuerRegistry.json";
+import IssuerRegistryABI from "../abi/IssuerRegistry.json";
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 

@@ -1,7 +1,9 @@
+import prisma from "../../db/db";
 import { onboardingRepository } from "./onboarding.repository";
+import { UserRole } from "../../middleware/auth.middleware";
 
 export const onboardingService = {
-  async upsertProfile(userId: string, role: string, data: any) {
+  async upsertProfile(userId: string, role: UserRole, data: any) {
     switch (role) {
       case "institution":
         return onboardingRepository.upsertInstitutionProfile(userId, data);
@@ -16,11 +18,11 @@ export const onboardingService = {
         return onboardingRepository.upsertCandidateProfile(userId, data);
 
       default:
-        throw new Error("Invalid role");
+        throw new Error("Invalid role for onboarding");
     }
   },
 
-  async getProfile(userId: string, role: string) {
+  async getProfile(userId: string, role: UserRole) {
     switch (role) {
       case "institution":
         return onboardingRepository.getInstitutionProfile(userId);
@@ -35,15 +37,36 @@ export const onboardingService = {
         return onboardingRepository.getCandidateProfile(userId);
 
       default:
-        throw new Error("Invalid role");
+        throw new Error("Invalid role for onboarding");
     }
   },
 
-  async addDocuments(userId: string, role: string, files: string[]) {
+  async addDocuments(userId: string, role: UserRole, files: string[]) {
     if (role === "candidate") {
-      return onboardingRepository.addCandidateDocuments(userId, files);
+      const docs = await onboardingRepository.addCandidateDocuments(
+        userId,
+        files,
+      );
+
+      await prisma.candidate.update({
+        where: { id: userId },
+        data: { onboardingCompleted: true },
+      });
+
+      return docs;
     }
 
-    return onboardingRepository.addIssuerDocuments(userId, files);
+    if (["institution", "professor", "recruiter"].includes(role)) {
+      const docs = await onboardingRepository.addIssuerDocuments(userId, files);
+
+      await prisma.issuer.update({
+        where: { id: userId },
+        data: { onboardingCompleted: true },
+      });
+
+      return docs;
+    }
+
+    throw new Error("Invalid role for document upload");
   },
 };

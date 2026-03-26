@@ -20,47 +20,33 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
-  console.log("COOKIES:", req.cookies);
   try {
-    let token: string | undefined;
-
-    if (req.cookies?.adminAccessToken) {
-      token = req.cookies.adminAccessToken;
-    } else if (req.cookies?.issuerAccessToken) {
-      token = req.cookies.issuerAccessToken;
-    } else if (req.cookies?.candidateAccessToken) {
-      token = req.cookies.candidateAccessToken;
-    }
+    const token =
+      req.cookies?.adminAccessToken ||
+      req.cookies?.issuerAccessToken ||
+      req.cookies?.candidateAccessToken;
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - No token",
-      });
+      return res.status(401).json({ message: "Unauthorized - No token" });
     }
-    console.log("TOKEN:", token);
+
     const decoded = verifyAccessToken(
       token,
       process.env.ACCESS_TOKEN_SECRET!,
-    ) as { userId: string; role: UserRole } | null;
+    ) as { userId: string; role: UserRole };
 
-    if (!decoded) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized - Invalid token",
-      });
+    if (!decoded?.userId || !decoded?.role) {
+      return res.status(401).json({ message: "Invalid token" });
     }
-    console.log("DECODED:", decoded);
+
     req.user = {
       userId: decoded.userId,
       role: decoded.role,
     };
 
     next();
-  } catch {
-    return res.status(401).json({
-      success: false,
-      message: "Authentication failed",
-    });
+  } catch (err) {
+    console.error("AUTH ERROR:", err);
+    return res.status(401).json({ message: "Authentication failed" });
   }
 };

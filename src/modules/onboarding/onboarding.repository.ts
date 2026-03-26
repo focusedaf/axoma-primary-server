@@ -1,7 +1,7 @@
 import prisma from "../../db/db";
 
 export const onboardingRepository = {
-  // ISSUERS
+  // ================= ISSUERS =================
 
   upsertInstitutionProfile: (userId: string, data: any) =>
     prisma.institutionProfile.upsert({
@@ -54,7 +54,7 @@ export const onboardingRepository = {
     });
   },
 
-  // CANDIDATE
+  // ================= CANDIDATE =================
 
   upsertCandidateProfile: (userId: string, data: any) =>
     prisma.candidateProfile.upsert({

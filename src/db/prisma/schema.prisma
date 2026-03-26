@@ -24,9 +24,10 @@ model Admin {
     password     String
     createdAt    DateTime @default(now())
 
-
+    onboardingCompleted Boolean @default(false) 
     profile   CandidateProfile?
     documents CandidateDocument[]
+    results   Result[] 
   }
 
   enum UserRole {
@@ -51,6 +52,7 @@ model Admin {
     password        String
     walletAddress   String   @unique
     createdAt       DateTime @default(now())
+
     status          IssuerStatus @default(pending) 
     institutionProfile InstitutionProfile?
     professorProfile   ProfessorProfile?
@@ -70,7 +72,7 @@ model Admin {
   location           String
   institutionType    String
   institutionWebsite String?
-  yearEstablished    Int
+  yearEstablished    String
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -86,7 +88,7 @@ model ProfessorProfile {
   department     String
   designation    String
   employmentType String
-  joiningYear    Int
+  joiningYear    String
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -104,7 +106,7 @@ model RecruiterProfile {
   employmentType  String
   companyWebsite  String?
   linkedinProfile String?
-  joiningYear     Int
+  joiningYear     String
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -153,7 +155,10 @@ model Exam {
   createdAt DateTime @default(now())
   status    String 
   scheduledOn DateTime 
-  
+  questions    Json?   
+  examType     String? 
+  instructions String? 
+
   attempts  Attempt[]
   results   Result[]
   violations Violation[]
@@ -181,6 +186,7 @@ model Result {
   createdAt   DateTime @default(now())
 
   exam        Exam     @relation(fields: [examId], references: [id])
+  candidate   Candidate @relation(fields: [candidateId], references: [id]) 
 }
 
 model Violation {
