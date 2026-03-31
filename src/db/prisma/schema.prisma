@@ -28,6 +28,7 @@ model Admin {
     profile   CandidateProfile?
     documents CandidateDocument[]
     results   Result[] 
+    attempts  Attempt[] 
   }
 
   enum UserRole {
@@ -178,6 +179,7 @@ model Attempt {
   status       String   // in_progress, submitted, auto_submitted
 
   exam         Exam     @relation(fields: [examId], references: [id])
+  candidate    Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model Result {
