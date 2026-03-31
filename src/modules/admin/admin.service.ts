@@ -4,6 +4,7 @@ import { IssuerStatus } from "../../db/generated/prisma";
 import { adminRepository } from "./admin.repository";
 import { ethers } from "ethers";
 import IssuerRegistryABI from "../abi/IssuerRegistry.json";
+import { io } from "../../server";
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 
@@ -50,6 +51,16 @@ export const adminService = {
   },
 
   fetchIssuers: async (status?: IssuerStatus) => {
+    const pendingCount = await prisma.issuer.count({
+      where: { status: "pending" },
+    });
+
+    if (pendingCount > 0) {
+      io.to("admin").emit("notification", {
+        type: "pending_alert",
+        message: `You have ${pendingCount} pending issuers`,
+      });
+    }
     return adminRepository.getIssuers(status);
   },
 
@@ -65,7 +76,7 @@ export const adminService = {
     if (issuer.status === "approved") {
       throw new Error("Issuer already approved");
     }
-    
+
     const signer = getAdminSigner();
 
     const contract = new ethers.Contract(
@@ -75,14 +86,27 @@ export const adminService = {
     );
 
     const tx = await contract.approveIssuer(issuer.walletAddress);
-    console.log("TX SENT:", tx.hash);
     await tx.wait();
-    console.log("TX SENT:", tx.hash);
 
-    return adminRepository.approveIssuer(issuerId);
+    const updated = await adminRepository.approveIssuer(issuerId);
+
+  
+    io.to(issuerId).emit("notification", {
+      type: "issuer_approved",
+      message: "Your account has been approved ",
+    });
+
+    return updated;
   },
 
   suspendIssuer: async (issuerId: string) => {
-    return adminRepository.suspendIssuer(issuerId);
+    const updated = await adminRepository.suspendIssuer(issuerId);
+
+    io.to(issuerId).emit("notification", {
+      type: "issuer_suspended",
+      message: "Your account has been suspended",
+    });
+
+    return updated;
   },
 };

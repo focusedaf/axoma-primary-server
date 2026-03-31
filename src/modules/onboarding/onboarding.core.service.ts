@@ -1,6 +1,7 @@
 import prisma from "../../db/db";
 import { onboardingRepository } from "./onboarding.repository";
 import { UserRole } from "../../middleware/auth.middleware";
+import { io } from "../../server";
 
 export const onboardingService = {
   async upsertProfile(userId: string, role: UserRole, data: any) {
@@ -62,6 +63,12 @@ export const onboardingService = {
       await prisma.issuer.update({
         where: { id: userId },
         data: { onboardingCompleted: true },
+      });
+
+      io.to("admin").emit("notification", {
+        type: "new_issuer_ready",
+        message:
+          "A new issuer has completed onboarding and is ready for approval",
       });
 
       return docs;

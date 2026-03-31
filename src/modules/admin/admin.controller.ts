@@ -81,32 +81,6 @@ export const fetchIssuers = async (req: Request, res: Response) => {
   }
 };
 
-export const getAdminMe = async (req: AuthRequest, res: Response) => {
-  try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden",
-      });
-    }
-
-    const admin = await adminService.getById(req.user.userId);
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        id: admin.id,
-        email: admin.email,
-        role: admin.role,
-      },
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch admin",
-    });
-  }
-};
 
 export const approveIssuer = async (req: Request, res: Response) => {
   try {
