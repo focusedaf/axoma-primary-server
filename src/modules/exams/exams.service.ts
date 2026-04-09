@@ -126,7 +126,7 @@ export async function getDraftById(id: string, issuerId: string) {
 }
 
 export async function getExamsByIssuer(issuerId: string) {
-  return prisma.exam.findMany({
+  const exams = await prisma.exam.findMany({
     where: {
       issuerId,
       status: {
@@ -136,14 +136,26 @@ export async function getExamsByIssuer(issuerId: string) {
     orderBy: {
       createdAt: "desc",
     },
-    select: {
-      id: true,
-      title: true,
-      scheduledOn: true,
-      status: true,
-      published: true,
+    include: {
+      attempts: {
+        select: {
+          status: true,
+        },
+      },
     },
   });
+
+  return exams.map((exam) => ({
+    id: exam.id,
+    title: exam.title,
+    scheduledOn: exam.scheduledOn,
+    status: exam.status,
+    published: exam.published,
+    submissions: {
+      submitted: exam.attempts.filter((a) => a.status === "submitted").length,
+      total: exam.attempts.length,
+    },
+  }));
 }
 
 export async function deleteDraft(id: string, issuerId: string) {

@@ -28,7 +28,8 @@ model Admin {
     profile   CandidateProfile?
     documents CandidateDocument[]
     results   Result[] 
-    attempts  Attempt[] 
+    attempts  Attempt[]
+    violations Violation[] 
   }
 
   enum UserRole {
@@ -204,6 +205,7 @@ model Violation {
   createdAt   DateTime @default(now())
 
   exam        Exam     @relation(fields: [examId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model ExamCandidate {
