@@ -124,6 +124,22 @@ export async function getMyDrafts(req: AuthRequest, res: Response) {
   }
 }
 
+export async function deleteDraft(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user?.userId)
+      return res.status(401).json({ message: "Unauthorized" });
+
+    const id = normalizeParam(req.params.id);
+
+    await examService.deleteDraft(id, req.user.userId);
+
+    res.json({ message: "Draft deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete draft" });
+  }
+}
+
 export async function getMyExams(req: AuthRequest, res: Response) {
   try {
     if (!req.user?.userId)

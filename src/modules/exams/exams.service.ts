@@ -54,14 +54,11 @@ export async function createExam(data: {
       cid: data.cid,
       issuerId: data.issuerId,
       status: "Upcoming",
-      scheduledOn: new Date(data.scheduledOn),
+      scheduledOn: data.scheduledOn ? new Date(data.scheduledOn) : null,
     },
   });
 }
 
-/**
- * FINAL FIXED VERSION
- */
 export async function saveDraftExam(data: {
   id?: string;
   title?: string;
@@ -79,11 +76,10 @@ export async function saveDraftExam(data: {
     examType: data.examType ?? "mcq",
     status: "Draft",
     questions: data.questions ?? [],
-    scheduledOn: data.scheduledOn ? new Date(data.scheduledOn) : null,
+    scheduledOnDraft: data.scheduledOn ?? null,
   };
 
   if (data.id) {
-    // update existing draft
     await prisma.exam.updateMany({
       where: {
         id: data.id,
@@ -93,10 +89,11 @@ export async function saveDraftExam(data: {
       data: updateData,
     });
 
-    return prisma.exam.findUnique({ where: { id: data.id } });
+    return prisma.exam.findUnique({
+      where: { id: data.id },
+    });
   }
 
-  // create new draft
   return prisma.exam.create({
     data: {
       ...updateData,

@@ -8,6 +8,7 @@ import {
   getDraftById,
   getMyExams,
   markPublished,
+  deleteDraft,
 } from "./exams.controller";
 
 import { authMiddleware } from "../../middleware/auth.middleware";
@@ -15,9 +16,7 @@ import { roleMiddleware } from "../../middleware/role.middleware";
 
 const ExamRouter = Router();
 
-/**
- * DRAFT ROUTES
- */
+
 ExamRouter.get(
   "/drafts/me",
   authMiddleware,
@@ -32,9 +31,6 @@ ExamRouter.get(
   getDraftById,
 );
 
-/**
- * CREATE + SAVE
- */
 ExamRouter.post(
   "/",
   authMiddleware,
@@ -62,6 +58,14 @@ ExamRouter.post(
   roleMiddleware(["professor", "institution"]),
   markPublished,
 );
+
+ExamRouter.delete(
+  "/drafts/:id",
+  authMiddleware,
+  roleMiddleware(["professor", "institution", "recruiter"]),
+  deleteDraft,
+);
+
 /**
  * EXAMS (CANDIDATE)
  */
