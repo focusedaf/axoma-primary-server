@@ -38,12 +38,22 @@ export async function createExam(req: AuthRequest, res: Response) {
     if (!req.user?.userId)
       return res.status(401).json({ message: "Unauthorized" });
 
-    const { title, duration, scheduledOn, questions, draftId } = req.body;
+    const {
+      title,
+      duration,
+      scheduledOn,
+      questions,
+      instructions,
+      examType,
+      draftId,
+    } = req.body;
 
     const cid = await uploadExamToIPFS({
       title,
       duration,
       scheduledOn,
+      instructions,
+      examType,
       questions,
     });
 
