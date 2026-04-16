@@ -1,35 +1,54 @@
 import { Router } from "express";
 import {
-  createViolationController,
-  getExamViolationsController,
-  getAllViolationsController,
+  createViolations,
+  getExamViolation,
+  getAllViolation,
+  getViolationsByExam,
 } from "./violations.controller";
+
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { roleMiddleware } from "../../middleware/role.middleware";
 
 const ViolationRouter = Router();
 
+/**
+ * Candidate → create violation
+ */
 ViolationRouter.post(
   "/",
   authMiddleware,
   roleMiddleware(["candidate"]),
-  createViolationController,
+  createViolations,
 );
 
-
+/**
+ * Candidate → all violations
+ */
 ViolationRouter.get(
   "/",
   authMiddleware,
   roleMiddleware(["candidate"]),
-  getAllViolationsController,
+  getAllViolation,
 );
 
-
+/**
+ * Candidate → exam-specific
+ */
 ViolationRouter.get(
   "/:examId",
   authMiddleware,
   roleMiddleware(["candidate"]),
-  getExamViolationsController,
+  getExamViolation,
+);
+
+/**
+ * Issuer → exam violations FIXED
+ */
+ViolationRouter.get(
+  "/exam/:examId",
+  authMiddleware,
+  roleMiddleware(["professor", "institution", "recruiter"]),
+  getViolationsByExam,
 );
 
 export default ViolationRouter;

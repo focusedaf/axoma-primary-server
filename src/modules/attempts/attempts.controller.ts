@@ -4,8 +4,8 @@ import { AuthRequest } from "../../middleware/auth.middleware";
 import { isCandidateAllowed } from "../exams/exams.service";
 import prisma from "../../db/db";
 
-export async function lockAttempt(req: AuthRequest, res: Response) {
-  const { examId, fingerprint } = req.body;
+export async function startAttempt(req: AuthRequest, res: Response) {
+  const { examId } = req.body;
 
   if (!req.user) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -30,31 +30,9 @@ export async function lockAttempt(req: AuthRequest, res: Response) {
     });
   }
 
-  await attemptService.lockAttempt(examId, candidateId, fingerprint);
+  const attempt = await attemptService.startAttempt(examId, candidateId);
 
-  res.json({ success: true });
-}
-
-export async function verifyLock(req: AuthRequest, res: Response) {
-  const { examId, fingerprint } = req.body;
-
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const candidateId = req.user.userId;
-
-  const valid = await attemptService.verifyAttempt(
-    examId,
-    candidateId,
-    fingerprint,
-  );
-
-  if (!valid) {
-    return res.status(403).json({ message: "Device mismatch" });
-  }
-
-  res.json({ success: true });
+  res.json({ success: true, attempt });
 }
 
 export async function submitExam(req: AuthRequest, res: Response) {

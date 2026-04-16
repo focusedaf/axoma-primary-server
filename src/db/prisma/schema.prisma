@@ -174,7 +174,6 @@ model Attempt {
   id           String   @id @default(uuid())
   examId       String
   candidateId  String
-  fingerprint  String
   startedAt    DateTime @default(now())
   submittedAt  DateTime?
   status       String   // in_progress, submitted, auto_submitted
@@ -216,4 +215,13 @@ model ExamCandidate {
   allowed     Boolean  @default(true)
 
   exam        Exam     @relation(fields: [examId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) 
+  userId    String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

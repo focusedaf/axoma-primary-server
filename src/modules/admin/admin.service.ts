@@ -4,7 +4,7 @@ import { IssuerStatus } from "../../db/generated/prisma";
 import { adminRepository } from "./admin.repository";
 import { ethers } from "ethers";
 import IssuerRegistryABI from "../abi/IssuerRegistry.json";
-import { io } from "../../server";
+import { sendNotification } from "../../utils/notify";
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 
@@ -56,11 +56,17 @@ export const adminService = {
     });
 
     if (pendingCount > 0) {
-      io.to("admin").emit("notification", {
-        type: "pending_alert",
-        message: `You have ${pendingCount} pending issuers`,
-      });
+      const admins = await prisma.admin.findMany();
+
+      for (const admin of admins) {
+        await sendNotification(
+          admin.id,
+          "pending_alert",
+          `You have ${pendingCount} pending issuers`,
+        );
+      }
     }
+
     return adminRepository.getIssuers(status);
   },
 
@@ -71,10 +77,6 @@ export const adminService = {
 
     if (!issuer || !issuer.walletAddress) {
       throw new Error("Issuer wallet missing");
-    }
-
-    if (issuer.status === "approved") {
-      throw new Error("Issuer already approved");
     }
 
     const signer = getAdminSigner();
@@ -90,11 +92,11 @@ export const adminService = {
 
     const updated = await adminRepository.approveIssuer(issuerId);
 
-  
-    io.to(issuerId).emit("notification", {
-      type: "issuer_approved",
-      message: "Your account has been approved ",
-    });
+    await sendNotification(
+      issuerId,
+      "issuer_approved",
+      "Your account has been approved",
+    );
 
     return updated;
   },
@@ -102,10 +104,11 @@ export const adminService = {
   suspendIssuer: async (issuerId: string) => {
     const updated = await adminRepository.suspendIssuer(issuerId);
 
-    io.to(issuerId).emit("notification", {
-      type: "issuer_suspended",
-      message: "Your account has been suspended",
-    });
+    await sendNotification(
+      issuerId,
+      "issuer_suspended",
+      "Your account has been suspended",
+    );
 
     return updated;
   },

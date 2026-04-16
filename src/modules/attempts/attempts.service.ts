@@ -1,10 +1,7 @@
 import prisma from "../../db/db";
+import { createResult } from "../results/results.service";
 
-export async function lockAttempt(
-  examId: string,
-  candidateId: string,
-  fingerprint: string,
-) {
+export async function startAttempt(examId: string, candidateId: string) {
   const existing = await prisma.attempt.findFirst({
     where: {
       examId,
@@ -19,16 +16,15 @@ export async function lockAttempt(
     data: {
       examId,
       candidateId,
-      fingerprint,
       status: "in_progress",
     },
   });
 }
 
-export async function verifyAttempt(
+export async function submitAttempt(
   examId: string,
   candidateId: string,
-  fingerprint: string,
+  answers: any,
 ) {
   const attempt = await prisma.attempt.findFirst({
     where: {
@@ -38,47 +34,25 @@ export async function verifyAttempt(
     },
   });
 
-  if (!attempt) return false;
+  if (!attempt) {
+    throw new Error("No active attempt found");
+  }
 
-  return attempt.fingerprint === fingerprint;
-}
+  return prisma.$transaction(async (tx) => {
+  
+    await createResult({
+      examId,
+      candidateId,
+      answers,
+      score: 0,
+    });
 
-export async function submitAttempt(
-  examId: string,
-  candidateId: string,
-  answers: any,
-) {
-  return prisma.$transaction([
-    prisma.result.create({
-      data: {
-        examId,
-        candidateId,
-        answers,
-        score: 0, // compute later
-      },
-    }),
-    prisma.attempt.updateMany({
-      where: { examId, candidateId },
+    await tx.attempt.update({
+      where: { id: attempt.id },
       data: {
         status: "submitted",
         submittedAt: new Date(),
       },
-    }),
-  ]);
-}
-
-
-export async function getAttemptsByExam(
-  examId: string,
-  issuerId: string,
-) {
-  return prisma.attempt.findMany({
-    where: {
-      examId,
-      exam: { issuerId },
-    },
-    include: {
-      exam: true,
-    },
+    });
   });
 }

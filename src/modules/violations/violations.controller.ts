@@ -4,9 +4,17 @@ import {
   logViolation,
   getExamViolations,
   getAllViolations,
+  getViolationsByExam as getViolationsByExamService,
 } from "./violations.service";
 
-export const createViolationController = async (
+function normalizeParam(param: string | string[]): string {
+  if (Array.isArray(param)) return param[0];
+  return param;
+}
+/**
+ * Candidate → create violation
+ */
+export const createViolations = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
@@ -16,24 +24,12 @@ export const createViolationController = async (
 
     if (req.headers["x-service-token"] === process.env.SERVICE_TOKEN) {
       candidateId = req.body.candidateId;
-
-      if (!candidateId) {
-        return res.status(400).json({ message: "Missing candidateId" });
-      }
     } else {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      if (!req.user) return res.status(401).json({ message: "Unauthorized" });
       candidateId = req.user.userId;
     }
 
     const { examId, type, severity, metadata } = req.body;
-
-    if (!examId || !type || !severity) {
-      return res.status(400).json({
-        message: "Missing required fields",
-      });
-    }
 
     await logViolation({
       examId,
@@ -49,40 +45,58 @@ export const createViolationController = async (
   }
 };
 
-export const getExamViolationsController = async (
+/**
+ * Candidate → own violations (per exam)
+ */
+export const getExamViolation = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
-    const candidateId = req.user.userId;
-    const examId = req.params.examId as string;
+    const examId = normalizeParam(req.params.examId);
 
-    const data = await getExamViolations(examId, candidateId);
+    const data = await getExamViolations(examId, req.user.userId);
 
     res.json(data);
   } catch (err) {
     next(err);
   }
 };
-
-export const getAllViolationsController = async (
+/**
+ * Candidate → all violations
+ */
+export const getAllViolation = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
-    const candidateId = req.user.userId;
+    const data = await getAllViolations(req.user.userId);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const data = await getAllViolations(candidateId);
+/**
+ * Issuer → violations by exam
+ */
+export const getViolationsByExam = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+    const examId = normalizeParam(req.params.examId);
+
+    const data = await getViolationsByExamService(examId, req.user.userId);
 
     res.json(data);
   } catch (err) {

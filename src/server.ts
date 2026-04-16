@@ -1,9 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { env } from "./config/env";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
-import { Server } from "socket.io";
 
 // routes
 import AuthRouter from "./modules/auth/auth.routes";
@@ -15,24 +13,21 @@ import ResultRouter from "./modules/results/results.routes";
 import AttemptRouter from "./modules/attempts/attempts.routes";
 import ExamRouter from "./modules/exams/exams.routes";
 import IssuerRouter from "./modules/issuer/issuer.routes";
+import NotificationRouter from "./modules/notifications/notifications.routes";
 
 const app = express();
 const httpServer = createServer(app);
 
-// SOCKET SERVER
-export const io = new Server(httpServer, {
-  cors: {
-    origin: env.CLIENT_URL,
-    credentials: true,
-  },
-});
+const CLIENTS = ["http://localhost:3000", "http://localhost:3001"];
 
+// CORS
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: CLIENTS,
     credentials: true,
   }),
 );
+
 app.use(cookieParser());
 app.use(express.json());
 
@@ -46,25 +41,8 @@ app.use("/api/v1/results", ResultRouter);
 app.use("/api/v1/violations", ViolationRouter);
 app.use("/api/v1/dashboard", DashboardRouter);
 app.use("/api/v1/issuer", IssuerRouter);
+app.use("/api/v1/notifications", NotificationRouter);
 
-io.on("connection", (socket) => {
-  const { userId, role } = socket.handshake.auth;
-  console.log("SOCKET CONNECT:", userId, role);
-  if (userId) {
-    socket.join(userId);
-    console.log("User connected:", userId);
-  }
-
-  if (role === "admin") {
-    socket.join("admin");
-    console.log("JOINED ADMIN ROOM");
-  }
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", userId);
-  });
-});
-
-httpServer.listen(env.PORT, () => {
-  console.log(`Server running on http://localhost:${env.PORT}`);
+httpServer.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });

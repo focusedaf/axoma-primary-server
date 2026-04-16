@@ -3,6 +3,7 @@ import prisma from "../../db/db";
 import * as examService from "./exams.service";
 import { uploadExamToIPFS } from "./ipfs.service";
 import { AuthRequest } from "../../middleware/auth.middleware";
+import { sendNotification } from "../../utils/notify";
 
 function normalizeParam(param: string | string[]): string {
   if (Array.isArray(param)) return param[0];
@@ -176,8 +177,20 @@ export async function markPublished(req: AuthRequest, res: Response) {
         status: "Upcoming",
         published: true,
       },
+      include: {
+        candidates: true,
+      },
     });
 
+    for (const c of exam.candidates) {
+      if (c.candidateId) {
+       await sendNotification(
+         c.candidateId,
+         "exam_published",
+         `New exam "${exam.title}" is available`,
+       );
+      }
+    }
     res.json(exam);
   } catch (err) {
     console.error(err);

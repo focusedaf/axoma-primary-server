@@ -1,7 +1,6 @@
 import prisma from "../../db/db";
 import { onboardingRepository } from "./onboarding.repository";
 import { UserRole } from "../../middleware/auth.middleware";
-import { io } from "../../server";
 
 export const onboardingService = {
   async upsertProfile(userId: string, role: UserRole, data: any) {
@@ -54,6 +53,15 @@ export const onboardingService = {
         data: { onboardingCompleted: true },
       });
 
+      // DB NOTIFICATION ONLY
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: "onboarding_complete",
+          message: "Your onboarding is complete",
+        },
+      });
+
       return docs;
     }
 
@@ -65,10 +73,13 @@ export const onboardingService = {
         data: { onboardingCompleted: true },
       });
 
-      io.to("admin").emit("notification", {
-        type: "new_issuer_ready",
-        message:
-          "A new issuer has completed onboarding and is ready for approval",
+     
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: "new_issuer_ready",
+          message: "Your onboarding is complete. Awaiting admin approval.",
+        },
       });
 
       return docs;

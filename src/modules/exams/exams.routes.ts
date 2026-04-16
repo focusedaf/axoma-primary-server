@@ -16,6 +16,9 @@ import { roleMiddleware } from "../../middleware/role.middleware";
 
 const ExamRouter = Router();
 
+/**
+ * ISSUER (professor, institution, recruiter)
+ */
 
 ExamRouter.get(
   "/drafts/me",
@@ -34,14 +37,14 @@ ExamRouter.get(
 ExamRouter.post(
   "/",
   authMiddleware,
-  roleMiddleware(["professor", "institution"]),
+  roleMiddleware(["professor", "institution", "recruiter"]),
   createExam,
 );
 
 ExamRouter.post(
   "/draft",
   authMiddleware,
-  roleMiddleware(["professor", "institution"]),
+  roleMiddleware(["professor", "institution", "recruiter"]),
   saveDraft,
 );
 
@@ -55,7 +58,7 @@ ExamRouter.get(
 ExamRouter.post(
   "/:examId/mark-published",
   authMiddleware,
-  roleMiddleware(["professor", "institution"]),
+  roleMiddleware(["professor", "institution", "recruiter"]),
   markPublished,
 );
 
@@ -67,9 +70,11 @@ ExamRouter.delete(
 );
 
 /**
- * EXAMS (CANDIDATE)
+ * CANDIDATE
  */
+
 ExamRouter.get("/", authMiddleware, roleMiddleware(["candidate"]), getAllExams);
+
 ExamRouter.get("/:id", authMiddleware, roleMiddleware(["candidate"]), getExam);
 
 export default ExamRouter;

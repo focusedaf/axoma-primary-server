@@ -2,31 +2,42 @@ import { Router } from "express";
 import {
   getResultController,
   getResultsByExamController,
+  gradeResultController,
 } from "./results.controller";
+
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { roleMiddleware } from "../../middleware/role.middleware";
 
-const ResultRouter = Router();
+const router = Router();
 
 /**
- *  Issuer → ALL results of exam
- * FIXES YOUR 404 ERROR
+ * PROFESSOR → get all submissions
  */
-ResultRouter.get(
+router.get(
   "/exam/:examId",
   authMiddleware,
-  roleMiddleware(["professor", "institution", "recruiter"]),
+  roleMiddleware(["professor"]),
   getResultsByExamController,
 );
 
 /**
- *  Candidate → own result
+ * PROFESSOR → grade
  */
-ResultRouter.get(
+router.patch(
+  "/:resultId/grade",
+  authMiddleware,
+  roleMiddleware(["professor"]),
+  gradeResultController,
+);
+
+/**
+ * CANDIDATE → own result
+ */
+router.get(
   "/:examId",
   authMiddleware,
   roleMiddleware(["candidate"]),
   getResultController,
 );
 
-export default ResultRouter;
+export default router;
