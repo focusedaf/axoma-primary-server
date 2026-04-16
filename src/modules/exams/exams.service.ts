@@ -25,6 +25,8 @@ export async function getExamById(examId: string) {
 }
 
 export async function getAllExams() {
+  await syncExamStatuses();
+
   return prisma.exam.findMany({
     where: {
       status: {
@@ -36,6 +38,7 @@ export async function getAllExams() {
       title: true,
       scheduledOn: true,
       status: true,
+      duration: true,
     },
   });
 }
@@ -166,4 +169,36 @@ export async function deleteDraft(id: string, issuerId: string) {
       status: "Draft",
     },
   });
+}
+
+export async function syncExamStatuses() {
+  const now = new Date();
+
+  const exams = await prisma.exam.findMany({
+    where: {
+      status: {
+        not: "Draft",
+      },
+    },
+  });
+
+  for (const exam of exams) {
+    if (!exam.scheduledOn) continue;
+
+    const start = new Date(exam.scheduledOn);
+    const end = new Date(start.getTime() + exam.duration * 60000);
+
+    let newStatus: string;
+
+    if (now < start) newStatus = "Upcoming";
+    else if (now >= start && now <= end) newStatus = "Live";
+    else newStatus = "Closed";
+
+    if (exam.status !== newStatus) {
+      await prisma.exam.update({
+        where: { id: exam.id },
+        data: { status: newStatus },
+      });
+    }
+  }
 }

@@ -10,6 +10,31 @@ function normalizeParam(param: string | string[]): string {
   return param;
 }
 
+/**
+ * 🔒 INLINE GUARD — ISSUER MUST BE APPROVED
+ */
+async function assertIssuerVerified(issuerId: string) {
+  const issuer = await prisma.issuer.findUnique({
+    where: { id: issuerId },
+    select: { status: true },
+  });
+
+  if (!issuer) {
+    const err: any = new Error("Issuer not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (issuer.status !== "approved") {
+    const err: any = new Error("Issuer not verified");
+    err.status = 403;
+    throw err;
+  }
+}
+
+/* =========================
+   GET EXAM
+========================= */
 export async function getExam(req: Request, res: Response) {
   try {
     const id = normalizeParam(req.params.id);
@@ -24,6 +49,9 @@ export async function getExam(req: Request, res: Response) {
   }
 }
 
+/* =========================
+   GET ALL EXAMS (CANDIDATE)
+========================= */
 export async function getAllExams(req: Request, res: Response) {
   try {
     const exams = await examService.getAllExams();
@@ -34,10 +62,16 @@ export async function getAllExams(req: Request, res: Response) {
   }
 }
 
+/* =========================
+   CREATE EXAM (ISSUER ONLY VERIFIED)
+========================= */
 export async function createExam(req: AuthRequest, res: Response) {
   try {
     if (!req.user?.userId)
       return res.status(401).json({ message: "Unauthorized" });
+
+    // 🔒 BLOCK UNVERIFIED ISSUERS
+    await assertIssuerVerified(req.user.userId);
 
     const {
       title,
@@ -66,15 +100,23 @@ export async function createExam(req: AuthRequest, res: Response) {
       issuerId: req.user.userId,
     });
 
-    if (draftId) await examService.deleteDraft(draftId, req.user.userId);
+    if (draftId) {
+      await examService.deleteDraft(draftId, req.user.userId);
+    }
 
-    res.status(201).json({ ...exam, cid });
-  } catch (err) {
+    return res.status(201).json({ ...exam, cid });
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+
+    return res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
   }
 }
 
+/* =========================
+   SAVE DRAFT
+========================= */
 export async function saveDraft(req: AuthRequest, res: Response) {
   try {
     if (!req.user?.userId)
@@ -108,6 +150,9 @@ export async function saveDraft(req: AuthRequest, res: Response) {
   }
 }
 
+/* =========================
+   GET DRAFT BY ID
+========================= */
 export async function getDraftById(req: AuthRequest, res: Response) {
   try {
     const id = normalizeParam(req.params.id);
@@ -125,6 +170,9 @@ export async function getDraftById(req: AuthRequest, res: Response) {
   }
 }
 
+/* =========================
+   GET MY DRAFTS
+========================= */
 export async function getMyDrafts(req: AuthRequest, res: Response) {
   try {
     const drafts = await examService.getDraftsByIssuer(req.user!.userId);
@@ -135,6 +183,9 @@ export async function getMyDrafts(req: AuthRequest, res: Response) {
   }
 }
 
+/* =========================
+   DELETE DRAFT
+========================= */
 export async function deleteDraft(req: AuthRequest, res: Response) {
   try {
     if (!req.user?.userId)
@@ -151,6 +202,9 @@ export async function deleteDraft(req: AuthRequest, res: Response) {
   }
 }
 
+/* =========================
+   GET MY EXAMS
+========================= */
 export async function getMyExams(req: AuthRequest, res: Response) {
   try {
     if (!req.user?.userId)
@@ -164,8 +218,20 @@ export async function getMyExams(req: AuthRequest, res: Response) {
   }
 }
 
+/* =========================
+   MARK PUBLISHED (ISSUER VERIFIED ONLY)
+========================= */
 export async function markPublished(req: AuthRequest, res: Response) {
   try {
+    const issuerId = req.user?.userId;
+
+    if (!issuerId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // 🔒 BLOCK UNVERIFIED ISSUERS
+    await assertIssuerVerified(issuerId);
+
     const examId = normalizeParam(req.params.examId);
     const { txHash, publishedAt } = req.body;
 
@@ -184,16 +250,20 @@ export async function markPublished(req: AuthRequest, res: Response) {
 
     for (const c of exam.candidates) {
       if (c.candidateId) {
-       await sendNotification(
-         c.candidateId,
-         "exam_published",
-         `New exam "${exam.title}" is available`,
-       );
+        await sendNotification(
+          c.candidateId,
+          "exam_published",
+          `New exam "${exam.title}" is available`,
+        );
       }
     }
+
     res.json(exam);
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: "Failed to mark as published" });
+
+    res.status(err.status || 500).json({
+      message: err.message || "Failed to mark as published",
+    });
   }
 }
